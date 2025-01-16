@@ -1,0 +1,53 @@
+{
+  "name": "easy-learning-nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@firebase/app": "^0.10.13",
+    "@firebase/firestore": "^4.7.3",
+    "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-icons": "^1.3.0",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/uuid": "^10.0.0",
+    "bcrypt": "^5.1.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "easy-learning-nextjs": "file:",
+    "firebase": "^10.14.1",
+    "framer-motion": "^11.11.9",
+    "html-react-parser": "^5.1.18",
+    "html2canvas": "^1.4.1",
+    "interactjs": "^1.10.27",
+    "lucide-react": "^0.452.0",
+    "next": "14.2.15",
+    "next-auth": "^4.24.8",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-quill": "^2.0.0",
+    "react-rnd": "^10.4.13",
+    "tailwind-merge": "^2.5.3",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^10.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}

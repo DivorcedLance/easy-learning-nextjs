@@ -1,0 +1,180 @@
+erDiagram
+    School {
+        string schoolId
+        string displayName
+        string fullName
+        string logoImageId
+        string primaryColor
+        string secondaryColor
+    }
+
+    Teacher {
+        string teacherId
+        string codTeacher
+        string dni
+        string email
+        string firstName
+        string lastName
+        string password
+        string profilePictureImageId
+        string schoolId
+        string sex
+    }
+
+    Student {
+        string studentId
+        string codStudent
+        string currentGrade
+        string dni
+        string email
+        string firstName
+        string lastName
+        string password
+        string profilePictureImageId
+        string schoolId
+        string sex
+    }
+
+    LearningStyle {
+        string learningStyleId
+        string color
+        string description
+        string name
+    }
+
+    Course {
+        string courseId
+        string codCourse
+        string courseName
+        string schoolId
+    }
+
+    Classroom {
+        string classroomId
+        string courseId
+        string grade
+        string schoolId
+        string section
+        string teacherId
+    }
+
+    QuestionTemplate {
+        string questionTemplateId
+        string templateName
+    }
+
+    Question {
+        string questionId
+        string courseId
+        string dataId
+        string grade
+        string lastModification
+        string schoolId
+        string templateId
+        string week
+    }
+
+    Image {
+        string imageId
+        string imageLink
+        int imageHeight
+        int imageWidth
+    }
+
+    DataTemplate1 {
+        string dataId
+        string statement
+        string imageId
+        array options
+    }
+
+    AnswerTemplate1 {
+        string answerId
+        boolean isCorrect
+    }
+
+    DataTemplate2 {
+        string dataId
+        string statement
+        string imageId
+        string correctAnswer
+        boolean isExactMatch
+    }
+
+    AnswerTemplate2 {
+        string answerId
+        string answer
+        boolean isCorrect
+    }
+
+    DataTemplate3 {
+        string dataId
+        string statement
+        string imageId
+    }
+
+    AnswerTemplate3 {
+        string answerId
+        string leftStatement
+        string rightStatement
+    }
+
+    DataTemplate4 {
+        string dataId
+        string statement
+        string imageId
+    }
+
+    AnswerTemplate4 {
+        string answerId
+        boolean isCorrect
+    }
+
+    Evaluation {
+        string evaluationId
+        string courseId
+        string duration
+        string evaluationType
+        string grade
+        string schoolId
+        string title
+        string week
+    }
+
+    Material {
+        string materialId
+        string courseId
+        string grade
+        string schoolId
+    }
+
+    %% Relationships
+    School ||--o{ Teacher : "has"
+    School ||--o{ Student : "has"
+    School ||--o{ Course : "offers"
+    School ||--o{ Classroom : "includes"
+    School |o--o| Image : "has"
+    Teacher ||--o| Classroom : "teaches"
+    Teacher |o--o| Image : "has"
+    Student |o--o| Image : "has"
+    Student ||--o| LearningStyle : "has"
+    Course ||--o{ Classroom : "contains"
+    QuestionTemplate ||--o{ LearningStyle : "mapped to"
+    QuestionTemplate ||--o| Question : "template for"
+    Image |o--o| DataTemplate1 : "included in"
+    Image |o--o| DataTemplate2 : "included in"
+    Image |o--o| DataTemplate3 : "included in"
+    Image |o--o| DataTemplate4 : "included in"
+    Question |o--o| DataTemplate1 : "has"
+    Question |o--o| DataTemplate2 : "has"
+    Question |o--o| DataTemplate3 : "has"
+    Question |o--o| DataTemplate4 : "has"
+    DataTemplate1 ||--o| AnswerTemplate1 : "answer for"
+    DataTemplate2 ||--o| AnswerTemplate2 : "answer for"
+    DataTemplate3 ||--o| AnswerTemplate3 : "answer for"
+    DataTemplate4 ||--o| AnswerTemplate4 : "answer for"
+    Question ||--o| LearningStyle : "uses"
+    Evaluation ||--o{ Question : "contains"
+    Material ||--o| Evaluation : "includes"
+    Classroom ||--o{ Evaluation : "has"
+    Evaluation ||--o| Student : "graded for"
