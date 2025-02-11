@@ -4,3 +4,6 @@ export type Course = {
   courseName: string;
   schoolId: string;
 }
+
+     
+            

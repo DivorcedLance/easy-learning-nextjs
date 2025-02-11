@@ -9,3 +9,9 @@ export interface Classroom {
   studentIds: string[];
   teacherId: string;
 }
+
+export interface NewClassroom {
+    grade: number;
+    section: string;
+    teacherId: string;
+}

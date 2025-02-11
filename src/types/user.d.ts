@@ -8,4 +8,6 @@ export interface User {
   sex: string;
   profilePictureLink: string | null;
   grade?: number;
+  role: "teacher" | "student" | "principal";
+  schoolId: string;
 }

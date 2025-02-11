@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getTeacherByEmail, getTeacherById, getSchoolById } from "@/lib/firebaseUtils";
+import { getTeacherByEmail, getTeacherById, getSchoolById, getPrincipalByEmail, getUserById, getUserByEmail } from "@/lib/firebaseUtils";
 
 export default NextAuth({
   providers: [
@@ -16,22 +16,16 @@ export default NextAuth({
           return null;
         }
 
-        // Buscar el maestro por email
-        const teacher = await getTeacherByEmail(credentials.email);
-        console.log(teacher);
-        if (!teacher) {
+        const user = await getUserByEmail(credentials.email);
+        if (!user) {
           return null;
         }
-
-        // Validar la contraseña
-        const isValidPassword = credentials.password === teacher.password;
-        if (!isValidPassword) {
+        if (user.password !== credentials.password) {
           return null;
         }
-
-        // Devolver solo el ID del maestro
+      
         return {
-          id: teacher.id,
+          id: user.id,
         };
       }
     })
@@ -53,7 +47,7 @@ export default NextAuth({
         throw new Error("User ID is missing in token");
       }
 
-      const user = await getTeacherById(token.id as string);
+      const user = await getUserById(token.id as string);
 
       if (!user) {
         throw new Error("User data is empty");
@@ -64,7 +58,9 @@ export default NextAuth({
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        codTeacher: user.codTeacher,
+        role: user.role,
+        codTeacher: user.role === "teacher" ? user.codTeacher : null,
+        codStudent: user.role === "student" ? user.codStudent : null,
         sex: user.sex,
         profilePictureLink: user.profilePictureLink,
       };

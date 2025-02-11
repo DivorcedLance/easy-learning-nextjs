@@ -47,6 +47,16 @@ export default function SideMenu({ user, selectedOption, setSelectedOption, setI
         >
           <BookOpen className="mr-2 h-4 w-4" /> Cursos
         </Button>
+        <Button
+          variant={selectedOption === 'silabus' ? 'default' : 'ghost'}
+          className="w-full justify-start"
+          onClick={() => {
+            setSelectedOption('silabus')
+            setIsOpen(false)
+          }}
+        >
+          <BookOpen className="mr-2 h-4 w-4" /> Silabos
+        </Button>
       </nav>
     </div>
   )

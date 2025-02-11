@@ -1,7 +1,7 @@
 import { db, storage } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { uploadBytes, getDownloadURL, ref } from "firebase/storage";
-import { Classroom } from "@/types/classroom";
+import { Classroom, NewClassroom } from "@/types/classroom";
 import { School } from "@/types/school";
 import { Teacher } from "@/types/teacher";
 import { Material } from "@/types/material";
@@ -12,6 +12,9 @@ import { Template } from "@/types/template";
 import { v4 as uuidv4 } from "uuid";
 import { LearningStyle } from "@/types/learningStyle";
 import { Student } from "@/types/student";
+import { Principal } from "@/types/principal";
+import { User } from "@/types/user";
+import { Silabo } from "@/types/silabo";
 
 // Función para buscar un maestro por email
 export async function getTeacherByEmail(email: string): Promise<Teacher & { password: string } | null> {
@@ -33,7 +36,7 @@ export async function getTeacherById(teacherId: string) {
   const teacherSnap = await getDoc(teachersRef);
 
   if (!teacherSnap.exists()) {
-    throw new Error("Teacher not found in database");
+    return null
   }
 
   return { id: teacherId, ...teacherSnap.data() } as Teacher;
@@ -84,6 +87,53 @@ export async function getClassroomsBySchoolAndTeacher(schoolId: string, teacherI
     classroomsRef,
     where('schoolId', '==', schoolId),
     where('teacherId', '==', teacherId)
+  );
+
+  const querySnapshot = await getDocs(q);
+  const classrooms: Classroom[] = [];
+
+  for (const docSnap of querySnapshot.docs) {
+    const classroomData = docSnap.data() as Classroom;
+
+    // Obtener información del curso a partir del courseId
+    if (classroomData.courseId) {
+      const courseDocRef = doc(db, 'Course', classroomData.courseId);
+      const courseDoc = await getDoc(courseDocRef);
+
+      if (courseDoc.exists()) {
+        const courseData = courseDoc.data();
+        classroomData.courseName = courseData.courseName || '';
+        classroomData.codCourse = courseData.codCourse || null;
+      } else {
+        classroomData.courseName = '';
+        classroomData.codCourse = null;
+      }
+    }
+
+    classrooms.push({ ...classroomData, id: docSnap.id });
+  }
+
+  return classrooms;
+}
+
+export async function getClassroomsByCourse(courseId: string): Promise<Classroom[]> {
+  const classroomsRef = collection(db, 'Classroom');
+  const q = query(
+    classroomsRef,
+    where('courseId', '==', courseId)
+  );
+
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) return [];
+  //devolver classrooms
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Classroom[];
+}
+
+export async function getClassroomsBySchool(schoolId: string): Promise<Classroom[]> {
+  const classroomsRef = collection(db, 'Classroom');
+  const q = query(
+    classroomsRef,
+    where('schoolId', '==', schoolId)
   );
 
   const querySnapshot = await getDocs(q);
@@ -308,6 +358,71 @@ export async function createQuestion(
   return docRef.id;
 }
 
+export async function getCoursesBySchool(schoolId: string) {
+  const coursesRef = collection(db, 'Course');
+  const q = query(coursesRef, where('schoolId', '==', schoolId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
+}
+
+export async function getSilabusBySchool(schoolId: string) {
+  const silabusRef = collection(db, 'CourseGrade');
+  const q = query(silabusRef, where('schoolId', '==', schoolId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Silabo[];
+}
+
+export async function createCourse(
+  course: Omit<Course, 'id'>, classrooms: NewClassroom[]
+) {
+  const courseTarget = await getCoursesBySchool(course.schoolId);
+  const courseExist = courseTarget.find((c) => c.courseName === course.courseName);
+  if (courseExist) {
+    throw new Error("Course already exists in the school");
+  }
+
+  const school = await getSchoolById(course.schoolId);
+  const cantidad = (await getClassroomsBySchool(course.schoolId)).length;
+  const courseSend = {
+    codCourse: course.codCourse ? course.codCourse : String((school.code)*100 + cantidad + 1),
+    courseName: course.courseName,
+    schoolId: course.schoolId,
+  };
+  const courseRef = doc(collection(db, "Course"));
+  await setDoc(courseRef, courseSend);
+
+  if (classrooms.length > 0) {
+    for (const classroom of classrooms) {
+      const classroomSend = {
+        courseId: courseRef.id,
+        grade: classroom.grade,
+        schoolId: course.schoolId,
+        section: classroom.section,
+        teacherId: classroom.teacherId,
+        studentIds: [] as string[],
+      };
+      const classroomRef = doc(collection(db, "Classroom"));
+      await setDoc(classroomRef, classroomSend);
+    }
+  }
+
+  return courseRef.id;
+}
+
+export async function createSilabus(silabus : Omit<Silabo, 'id'>){
+  try {
+    console.log("silabus");
+    const docRef = doc(collection(db, "CourseGrade"));
+    await setDoc(docRef, silabus);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error creating silabus:", error);
+    throw new Error("Failed to create silabus");
+  }
+}
+
 export async function createEvaluation(
   evaluation: Omit<Evaluation, 'id'>
 ) {
@@ -376,14 +491,140 @@ export async function updateEvaluation(evaluationId: string, evaluation: Omit<Ev
   await setDoc(docRef, evaluation, { merge: true });
 }
 
+export async function updateCourse(courseId: string, course: Omit<Course, 'id'>, classrooms: NewClassroom[]) {
+  const docRef = doc(db, 'Course', courseId);
+  await setDoc(docRef, course, { merge: true });
+
+  const classroomsRef = collection(db, 'Classroom');
+
+  // Obtener los salones existentes en Firestore
+  const existingClassroomsSnapshot = await getDocs(query(classroomsRef, where("courseId", "==", courseId)));
+
+  const existingClassrooms = new Set(
+    existingClassroomsSnapshot.docs.map(doc => JSON.stringify({
+      grade: doc.data().grade,
+      section: doc.data().section,
+      teacherId: doc.data().teacherId
+    }))
+  );
+
+  // Filtrar los salones que no existen en la colección
+  const newClassrooms = classrooms.filter(
+    classroom => !existingClassrooms.has(JSON.stringify({
+      grade: classroom.grade,
+      section: classroom.section,
+      teacherId: classroom.teacherId
+    }))
+  );
+
+  // Agregar solo los nuevos salones a Firestore
+  for (const classroom of newClassrooms) {
+    await addDoc(classroomsRef, {
+      courseId,
+      grade: classroom.grade,
+      section: classroom.section,
+      teacherId: classroom.teacherId,
+      studentIds: [] as string[],
+      schoolId: course.schoolId
+    });
+  }
+  
+}
+
 // extraer student por id
 export async function getStudentById(studentId: string) {
   const studentRef = doc(db, 'Student', studentId);
   const studentSnap = await getDoc(studentRef);
 
   if (!studentSnap.exists()) {
-    throw new Error("Student not found in database");
+    return null
   }
 
   return { id: studentId, ...studentSnap.data() } as Student;
+}
+
+// PRINCIPAL
+// extraer director por email
+export async function getPrincipalByEmail(email: string): Promise<Principal & { password: string } | null> {
+  const principalsRef = collection(db, "Principal");
+  const q = query(principalsRef, where("email", "==", email));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return null;
+  }
+
+  const principalDoc = querySnapshot.docs[0];
+  return { id: principalDoc.id, ...principalDoc.data() } as Principal & { password: string };
+}
+
+export async function getUserById(id: string) {
+
+  let user : User | null = null;
+  // Intentar encontrar al usuario en cada tabla
+  const teacher = await getTeacherById(id);
+  if (teacher) {
+    user = { ...teacher, role: "teacher" };
+  }else{
+    const principal = await getPrincipalById(id);
+    if (principal) {
+      user = { ...principal, role: "principal" };
+    }else{
+      const student = await getStudentById(id);
+      if (student) {
+        user = { ...student, role: "student" };
+      }else{
+        throw new Error("User not found in database");
+      }
+    }
+  }
+
+  return user as User;
+}
+
+// extraer director por id
+export async function getPrincipalById(principalId: string) {
+  const principalRef = doc(db, 'Principal', principalId);
+  const principalSnap = await getDoc(principalRef);
+
+  if (!principalSnap.exists()) {
+    return null
+  }
+
+  return { id: principalId, ...principalSnap.data() } as Principal;
+}
+
+export async function getUserByEmail(email: string) {
+  const teacher = await getTeacherByEmail(email);
+  if (teacher) return { ...teacher, role: "teacher" };
+
+  const principal = await getPrincipalByEmail(email);
+  if (principal) return { ...principal, role: "principal" };
+
+  const student = await getStudentByEmail(email);
+  if (student) return { ...student, role: "student" };
+
+  return null; // Si no se encuentra en ninguna tabla
+}
+
+// extraer estudiante por email
+export async function getStudentByEmail(email: string): Promise<Student & { password: string } | null> {
+  const studentsRef = collection(db, "Student");
+  const q = query(studentsRef, where("email", "==", email));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return null;
+  }
+
+  const studentDoc = querySnapshot.docs[0];
+  return { id: studentDoc.id, ...studentDoc.data() } as Student & { password: string };
+}
+
+export async function getTeachersBySchool(schoolId: string) {
+  const teachersRef = collection(db, 'Teacher');
+  const q = query(teachersRef, where('schoolId', '==', schoolId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Teacher[];
 }

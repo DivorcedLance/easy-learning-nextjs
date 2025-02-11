@@ -5,4 +5,5 @@ export interface School {
   logoLink: string | null;
   mainColor: string | null;
   secundaryColor: string | null;
+  code: number;
 }

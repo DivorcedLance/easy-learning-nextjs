@@ -12,7 +12,7 @@ import { LoadingCharger } from '@/components/LoadingCharger';
 export default function ClassroomReport({ classroom }: { classroom: Classroom }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<(Student|null)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,11 +46,13 @@ export default function ClassroomReport({ classroom }: { classroom: Classroom })
     <div>
       <h2>Students:</h2>
       <ul>
-      {students.map((student) => (
+      {students.map((student) => 
+        student && (
           <li key={student.id}>
             <StudentCard student={student} />
           </li>
-        ))}
+        )
+      )}
       </ul>
     </div>
   );
