@@ -1,5 +1,5 @@
 import { db, storage } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { uploadBytes, getDownloadURL, ref } from "firebase/storage";
 import { Classroom, NewClassroom } from "@/types/classroom";
 import { School } from "@/types/school";
@@ -20,6 +20,7 @@ import { Silabo } from "@/types/silabo";
 export async function getTeacherByEmail(email: string): Promise<Teacher & { password: string } | null> {
   const teachersRef = collection(db, "Teacher");
   const q = query(teachersRef, where("email", "==", email));
+  console.log('verifica 2')
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
@@ -33,6 +34,7 @@ export async function getTeacherByEmail(email: string): Promise<Teacher & { pass
 // Función para obtener un usuario por ID
 export async function getTeacherById(teacherId: string) {
   const teachersRef = doc(db, "Teacher", teacherId);
+  console.log('verifica 3')
   const teacherSnap = await getDoc(teachersRef);
 
   if (!teacherSnap.exists()) {
@@ -45,6 +47,7 @@ export async function getTeacherById(teacherId: string) {
 // Función para obtener una escuela por ID
 export async function getSchoolById(schoolId: string) {
   const schoolRef = doc(db, "School", schoolId);
+  console.log('verifica 4')
   const schoolSnap = await getDoc(schoolRef);
 
   if (!schoolSnap.exists()) {
@@ -57,6 +60,7 @@ export async function getSchoolById(schoolId: string) {
 // Función para obtener un salón por ID
 export async function getClassroomById(classroomId: string) {
   const classroomRef = doc(db, "Classroom", classroomId);
+  console.log('verifica 5')
   const classroomSnap = await getDoc(classroomRef);
 
   if (!classroomSnap.exists()) {
@@ -66,6 +70,7 @@ export async function getClassroomById(classroomId: string) {
 
 
   const courseDocRef = doc(db, 'Course', classroomData.courseId);
+  console.log('verifica 6')
   const courseDoc = await getDoc(courseDocRef);
 
   if (courseDoc.exists()) {
@@ -88,7 +93,7 @@ export async function getClassroomsBySchoolAndTeacher(schoolId: string, teacherI
     where('schoolId', '==', schoolId),
     where('teacherId', '==', teacherId)
   );
-
+  console.log('verifica 7')
   const querySnapshot = await getDocs(q);
   const classrooms: Classroom[] = [];
 
@@ -98,6 +103,7 @@ export async function getClassroomsBySchoolAndTeacher(schoolId: string, teacherI
     // Obtener información del curso a partir del courseId
     if (classroomData.courseId) {
       const courseDocRef = doc(db, 'Course', classroomData.courseId);
+      console.log('verifica 8')
       const courseDoc = await getDoc(courseDocRef);
 
       if (courseDoc.exists()) {
@@ -122,7 +128,7 @@ export async function getClassroomsByCourse(courseId: string): Promise<Classroom
     classroomsRef,
     where('courseId', '==', courseId)
   );
-
+  console.log('verifica 9')
   const querySnapshot = await getDocs(q);
   if (querySnapshot.empty) return [];
   //devolver classrooms
@@ -135,27 +141,39 @@ export async function getClassroomsBySchool(schoolId: string): Promise<Classroom
     classroomsRef,
     where('schoolId', '==', schoolId)
   );
-
+  console.log('verifica 10')
   const querySnapshot = await getDocs(q);
   const classrooms: Classroom[] = [];
+  console.log('verifica 11')
 
   for (const docSnap of querySnapshot.docs) {
     const classroomData = docSnap.data() as Classroom;
 
     // Obtener información del curso a partir del courseId
     if (classroomData.courseId) {
-      const courseDocRef = doc(db, 'Course', classroomData.courseId);
-      const courseDoc = await getDoc(courseDocRef);
+      //obtener informacion del profesor
+      const teacherDocRef = doc(db, 'Teacher', classroomData.teacherId);
+      const teacherDoc = await getDoc(teacherDocRef);
+      console.log('verifica 11X')
 
-      if (courseDoc.exists()) {
+      const courseDocRef = doc(db, 'Course', classroomData.courseId);
+
+      const courseDoc = await getDoc(courseDocRef);
+      console.log('verifica 11Y')
+
+      if (courseDoc.exists() && teacherDoc.exists()) {
         const courseData = courseDoc.data();
+        const teacherData = teacherDoc.data();
         classroomData.courseName = courseData.courseName || '';
         classroomData.codCourse = courseData.codCourse || null;
+        classroomData.teacherName = teacherData.firstName + " " + teacherData.lastName || '';
       } else {
+        classroomData.teacherName = '';
         classroomData.courseName = '';
         classroomData.codCourse = null;
       }
     }
+
 
     classrooms.push({ ...classroomData, id: docSnap.id });
   }
@@ -173,6 +191,7 @@ export async function getMaterialByClassroom({ courseId, grade, schoolId }: { co
     where('schoolId', '==', schoolId)
   );
   const querySnapshot = await getDocs(q);
+  console.log('verifica 12')
 
   if (querySnapshot.empty) {
     return null;
@@ -192,6 +211,7 @@ export async function getQuestionsBySchoolCourse(schoolId: string, courseId: str
     where('courseId', '==', courseId)
   );
   const querySnapshot = await getDocs(q);
+  console.log('verifica 13')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Question[];
 }
@@ -199,6 +219,7 @@ export async function getQuestionsBySchoolCourse(schoolId: string, courseId: str
 export async function getTemplates(): Promise<Template[]> {
   const questionsRef = collection(db, 'QuestionTemplate');
   const querySnapshot = await getDocs(questionsRef);
+  console.log('verifica 14')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Template));
 }
@@ -206,6 +227,7 @@ export async function getTemplates(): Promise<Template[]> {
 export async function getTemplateById(templateId: string) {
   const templateRef = doc(db, 'QuestionTemplate', templateId);
   const templateDoc = await getDoc(templateRef);
+  console.log('verifica 15')
 
   if (!templateDoc.exists()) {
     throw new Error("Template not found in database");
@@ -221,6 +243,7 @@ export async function getCourseByClassroomId(classroomId: string) {
 
   const courseDocRef = doc(db, 'Course', classroom.courseId);
   const courseDoc = await getDoc(courseDocRef);
+  console.log('verifica 16')
 
   if (!courseDoc.exists()) {
     throw new Error("Course not found in database");
@@ -233,6 +256,7 @@ export async function getCourseByClassroomId(classroomId: string) {
 export async function getCourseById(courseId: string) {
   const courseDocRef = doc(db, 'Course', courseId);
   const courseDoc = await getDoc(courseDocRef);
+  console.log('verifica 17')
 
   if (!courseDoc.exists()) {
     throw new Error("Course not found in database");
@@ -245,6 +269,7 @@ export async function getCourseById(courseId: string) {
 export async function getQuestionById(questionId: string) {
   const questionDocRef = doc(db, 'Question', questionId);
   const questionDoc = await getDoc(questionDocRef);
+  console.log('verifica 18')
 
   if (!questionDoc.exists()) {
     throw new Error("Question not found in database");
@@ -259,6 +284,7 @@ export async function getQuestionsById(questionIds: string[]) {
   const questionsRef = collection(db, 'Question');
   const q = query(questionsRef, where('__name__', 'in', questionIds));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 19')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Question[];
 }
@@ -270,6 +296,7 @@ export async function getEvaluationsByIds(evaluationIds: string[]) {
   const evaluationsRef = collection(db, 'Evaluation');
   const q = query(evaluationsRef, where('__name__', 'in', evaluationIds));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 20')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Evaluation[];
 }
@@ -277,6 +304,7 @@ export async function getEvaluationsByIds(evaluationIds: string[]) {
 export async function getEvaluationById(evaluationId: string) {
   const evaluationDocRef = doc(db, 'Evaluation', evaluationId);
   const evaluationDoc = await getDoc(evaluationDocRef);
+  console.log('verifica 21')
 
   if (!evaluationDoc.exists()) {
     throw new Error("Weekly Test not found in database");
@@ -362,6 +390,7 @@ export async function getCoursesBySchool(schoolId: string) {
   const coursesRef = collection(db, 'Course');
   const q = query(coursesRef, where('schoolId', '==', schoolId));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 22')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
 }
@@ -370,52 +399,110 @@ export async function getSilabusBySchool(schoolId: string) {
   const silabusRef = collection(db, 'CourseGrade');
   const q = query(silabusRef, where('schoolId', '==', schoolId));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 23')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Silabo[];
 }
 
-export async function createCourse(
-  course: Omit<Course, 'id'>, classrooms: NewClassroom[]
-) {
-  const courseTarget = await getCoursesBySchool(course.schoolId);
-  const courseExist = courseTarget.find((c) => c.courseName === course.courseName);
-  if (courseExist) {
-    throw new Error("Course already exists in the school");
+export async function getSilabusById(silabusId: string) {
+  const silabusRef = doc(db, 'CourseGrade', silabusId);
+  const silabusDoc = await getDoc(silabusRef);
+  console.log('verifica getSilabusById')
+
+  if (!silabusDoc.exists()) {
+    throw new Error("Silabus not found in database");
   }
 
-  const school = await getSchoolById(course.schoolId);
-  const cantidad = (await getClassroomsBySchool(course.schoolId)).length;
-  const courseSend = {
-    codCourse: course.codCourse ? course.codCourse : String((school.code)*100 + cantidad + 1),
-    courseName: course.courseName,
-    schoolId: course.schoolId,
-  };
-  const courseRef = doc(collection(db, "Course"));
-  await setDoc(courseRef, courseSend);
-
-  if (classrooms.length > 0) {
-    for (const classroom of classrooms) {
-      const classroomSend = {
-        courseId: courseRef.id,
-        grade: classroom.grade,
-        schoolId: course.schoolId,
-        section: classroom.section,
-        teacherId: classroom.teacherId,
-        studentIds: [] as string[],
-      };
-      const classroomRef = doc(collection(db, "Classroom"));
-      await setDoc(classroomRef, classroomSend);
-    }
-  }
-
-  return courseRef.id;
+  return { id: silabusId, ...silabusDoc.data() } as Silabo;
 }
 
-export async function createSilabus(silabus : Omit<Silabo, 'id'>){
+export async function getSilabusByCourse(courseId: string) {
+  const silabusRef = collection(db, 'CourseGrade');
+  const q = query(silabusRef, where('courseId', '==', courseId));
+  const querySnapshot = await getDocs(q);
+  console.log('verifica getSilabusByCourse')
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Silabo[];
+}
+
+export async function updateSilaBus(silabusId: string, silabus: Omit<Silabo, 'id'>) {
+  const docRef = doc(db, 'CourseGrade', silabusId);
+  await setDoc(docRef, silabus, { merge: true });
+}
+
+export async function deleteSilabus(silabusId: string) {
+  const docRef = doc(db, 'CourseGrade', silabusId);
+  await deleteDoc(docRef);
+}
+
+export async function createCourse(course: Omit<Course, 'id'>, grades: { courseId: string; grade: number }[], availableCourses: Course[], silabus: (Silabo | null)[]) {
   try {
-    console.log("silabus");
+    if (!course.courseName) {
+      throw new Error("Course name is required");
+    }
+    const cursosNombres = availableCourses.map((c) => c.courseName);
+    const courseExist = cursosNombres.find((c) => c === course.courseName);
+    if (courseExist) {
+      throw new Error("Course already exists in the school");
+    }
+
+    // Obtener los cursos y aulas en paralelo para mejorar la eficiencia
+    const school = await getSchoolById(course.schoolId);
+
+    // Generar código del curso
+    const cantidad = cursosNombres.length;
+    const codCourse = course.codCourse || String(school.code * 100 + cantidad + 1);
+
+    // Referencia y datos del curso
+    const courseRef = doc(collection(db, "Course"));
+    const courseSend = {
+      codCourse,
+      courseName: course.courseName,
+      schoolId: course.schoolId,
+    };
+
+    // Guardar el curso en Firestore
+    await setDoc(courseRef, courseSend);
+
+    // Crear los silabus en paralelo
+    await Promise.all(
+      grades.map((grad) => {
+        const silabos = {
+          courseId: courseRef.id, // Usar el ID del curso recién creado
+          schoolId: course.schoolId,
+          grade: grad.grade,
+          silabusData: {
+            description: silabus.find((s) => s?.grade === grad.grade)?.silabusData.description || "",
+            goals: silabus.find((s) => s?.grade === grad.grade)?.silabusData.goals || "",
+            topics: silabus.find((s) => s?.grade === grad.grade)?.silabusData.topics || {},
+            method: silabus.find((s) => s?.grade === grad.grade)?.silabusData.method || "",
+            bibliography: silabus.find((s) => s?.grade === grad.grade)?.silabusData.bibliography || "",
+          },
+        };
+        return setDoc(doc(collection(db, "CourseGrade")), silabos);
+      })
+    );
+
+    return courseRef.id;
+  } catch (error) {
+    console.error("Error creating course:", error);
+    throw new Error("Failed to create course");
+  }
+}
+
+
+export async function createSilabus(silabus: Omit<Silabo, 'id'>) {
+  try {
+    // validar si ya existe un silabus con el mismo grado y curso
+    const silabusExist = await getSilabusByCourse(silabus.courseId as string);
+    const silabusExistGrade = silabusExist.find((s) => s.grade === silabus.grade);
+    if (silabusExistGrade) {
+      throw new Error("Silabus already exists");
+    }
+
     const docRef = doc(collection(db, "CourseGrade"));
     await setDoc(docRef, silabus);
+
     return docRef.id;
   } catch (error) {
     console.error("Error creating silabus:", error);
@@ -441,6 +528,7 @@ export async function createEvaluation(
     where('schoolId', '==', evaluation.schoolId)
   );
   const querySnapshot = await getDocs(q);
+  console.log('verifica 24')
 
 
   if (!querySnapshot.empty) {
@@ -465,6 +553,7 @@ export async function createEvaluation(
 export async function getLearningStyles() {
   const learningStylesRef = collection(db, 'LearningStyle');
   const querySnapshot = await getDocs(learningStylesRef);
+  console.log('verifica 25')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LearningStyle[];
 }
@@ -472,6 +561,7 @@ export async function getLearningStyles() {
 export async function getLearningStyleById(learningStyleId: string) {
   const learningStyleRef = doc(db, 'LearningStyle', learningStyleId);
   const learningStyleDoc = await getDoc(learningStyleRef);
+  console.log('verifica 26')
 
   if (!learningStyleDoc.exists()) {
     throw new Error("Learning Style not found in database");
@@ -491,50 +581,17 @@ export async function updateEvaluation(evaluationId: string, evaluation: Omit<Ev
   await setDoc(docRef, evaluation, { merge: true });
 }
 
-export async function updateCourse(courseId: string, course: Omit<Course, 'id'>, classrooms: NewClassroom[]) {
+export async function updateCourse(courseId: string, course: Omit<Course, 'id'>, grades: { courseId: string; grade: number }[]) {
   const docRef = doc(db, 'Course', courseId);
   await setDoc(docRef, course, { merge: true });
 
-  const classroomsRef = collection(db, 'Classroom');
-
-  // Obtener los salones existentes en Firestore
-  const existingClassroomsSnapshot = await getDocs(query(classroomsRef, where("courseId", "==", courseId)));
-
-  const existingClassrooms = new Set(
-    existingClassroomsSnapshot.docs.map(doc => JSON.stringify({
-      grade: doc.data().grade,
-      section: doc.data().section,
-      teacherId: doc.data().teacherId
-    }))
-  );
-
-  // Filtrar los salones que no existen en la colección
-  const newClassrooms = classrooms.filter(
-    classroom => !existingClassrooms.has(JSON.stringify({
-      grade: classroom.grade,
-      section: classroom.section,
-      teacherId: classroom.teacherId
-    }))
-  );
-
-  // Agregar solo los nuevos salones a Firestore
-  for (const classroom of newClassrooms) {
-    await addDoc(classroomsRef, {
-      courseId,
-      grade: classroom.grade,
-      section: classroom.section,
-      teacherId: classroom.teacherId,
-      studentIds: [] as string[],
-      schoolId: course.schoolId
-    });
-  }
-  
 }
 
 // extraer student por id
 export async function getStudentById(studentId: string) {
   const studentRef = doc(db, 'Student', studentId);
   const studentSnap = await getDoc(studentRef);
+  console.log('verifica 27')
 
   if (!studentSnap.exists()) {
     return null
@@ -543,12 +600,34 @@ export async function getStudentById(studentId: string) {
   return { id: studentId, ...studentSnap.data() } as Student;
 }
 
+export async function getStudentsBySchool(schoolId: string) {
+  console.log('getStudentsBySchool')
+  const studentsRef = collection(db, 'Student');
+  const q = query(studentsRef, where('schoolId', '==', schoolId));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+}
+
+export async function getStudentsByClassroomGrade(classroomId: string) {
+  console.log('getStudentsByClassroomGrade')
+  //obtener clase
+  const classroom = await getClassroomById(classroomId);
+
+  const studentsRef = collection(db, 'Student');
+  const q = query(studentsRef, where('currentGrade', '==', classroom.grade));
+  const querySnapshot = await getDocs(q);
+
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Student[];
+}
+
 // PRINCIPAL
 // extraer director por email
 export async function getPrincipalByEmail(email: string): Promise<Principal & { password: string } | null> {
   const principalsRef = collection(db, "Principal");
   const q = query(principalsRef, where("email", "==", email));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 28')
 
   if (querySnapshot.empty) {
     return null;
@@ -560,20 +639,20 @@ export async function getPrincipalByEmail(email: string): Promise<Principal & { 
 
 export async function getUserById(id: string) {
 
-  let user : User | null = null;
+  let user: User | null = null;
   // Intentar encontrar al usuario en cada tabla
   const teacher = await getTeacherById(id);
   if (teacher) {
     user = { ...teacher, role: "teacher" };
-  }else{
+  } else {
     const principal = await getPrincipalById(id);
     if (principal) {
       user = { ...principal, role: "principal" };
-    }else{
+    } else {
       const student = await getStudentById(id);
       if (student) {
         user = { ...student, role: "student" };
-      }else{
+      } else {
         throw new Error("User not found in database");
       }
     }
@@ -586,6 +665,7 @@ export async function getUserById(id: string) {
 export async function getPrincipalById(principalId: string) {
   const principalRef = doc(db, 'Principal', principalId);
   const principalSnap = await getDoc(principalRef);
+  console.log('verifica 29')
 
   if (!principalSnap.exists()) {
     return null
@@ -595,6 +675,7 @@ export async function getPrincipalById(principalId: string) {
 }
 
 export async function getUserByEmail(email: string) {
+  console.log('VERIFICANDO getuseremail')
   const teacher = await getTeacherByEmail(email);
   if (teacher) return { ...teacher, role: "teacher" };
 
@@ -612,6 +693,7 @@ export async function getStudentByEmail(email: string): Promise<Student & { pass
   const studentsRef = collection(db, "Student");
   const q = query(studentsRef, where("email", "==", email));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 30')
 
   if (querySnapshot.empty) {
     return null;
@@ -625,6 +707,220 @@ export async function getTeachersBySchool(schoolId: string) {
   const teachersRef = collection(db, 'Teacher');
   const q = query(teachersRef, where('schoolId', '==', schoolId));
   const querySnapshot = await getDocs(q);
+  console.log('verifica 31')
 
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Teacher[];
+}
+
+export async function getCourseGradeAndCourseBySchool(schoolId: string) {
+  const resp: {
+    course: Course;
+    courseGrade: Silabo;
+  }[] = [];
+  const coursesRef = collection(db, 'Course');
+  const q = query(coursesRef, where('schoolId', '==', schoolId));
+  const querySnapshot = await getDocs(q);
+  console.log('verifica 32')
+
+  // obtener los cursos más los grados
+  const courses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
+
+  const silabus = await getSilabusBySchool(schoolId);
+
+  for (const silab of silabus) {
+
+    const curso = courses.find((c) => c.id === silab.courseId);
+
+    if (curso) {
+      const response = {
+        course: curso,
+        courseGrade: silab
+      }
+
+      resp.push(response);
+    }
+  }
+  console.log('aa', resp)
+  return resp;
+}
+
+export async function createClassroom(classroom: Omit<Classroom, 'id'>) {
+  const docRef = doc(collection(db, "Classroom"));
+  await setDoc(docRef, classroom);
+
+  return docRef.id;
+}
+
+export async function deleteClassroom(classroomId: string) {
+  const docRef = doc(db, 'Classroom', classroomId);
+  await deleteDoc(docRef);
+}
+
+// GESTION DE PROFESORES
+export async function getTeacherByCode(codTeacher: string) {
+  const teachersRef = collection(db, 'Teacher');
+  const q = query(teachersRef, where('codTeacher', '==', codTeacher));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return null;
+  }
+
+  const teacherDoc = querySnapshot.docs[0];
+  return { id: teacherDoc.id, ...teacherDoc.data() } as Teacher;
+}
+
+const generateRandomPassword = (length = 8) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+};
+// crear profesor
+export async function createTeacher(teacher: {
+  codTeacher: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dni: string
+  sex: string;
+  state: boolean;
+  profilePictureLink?: string;
+  schoolId: string
+}) {
+  try {
+    // Verificar si ya existe un profesor con el mismo código
+    const teacherExist = await getTeacherByCode(teacher.codTeacher);
+    if (teacherExist) {
+      throw new Error("Teacher already exists");
+    }
+    // verificar si ya existe un profesor con el mismo email
+    const teacherByEmail = await getTeacherByEmail(teacher.email);
+    if (teacherByEmail) {
+      throw new Error("Teacher already exists");
+    }
+    const teacherData = { ...teacher, password: generateRandomPassword() };
+    const docRef = doc(collection(db, "Teacher"));
+    await setDoc(docRef, teacherData);
+
+    return { id: docRef.id, password: teacherData.password };
+  } catch (error) {
+    console.error("Error creating teacher:", error);
+    throw new Error("Failed to create teacher");
+  }
+}
+// actualizar profesor
+export async function updateTeacher(teacherId: string, teacher: {
+  codTeacher: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dni: string
+  sex: string;
+  state: boolean;
+  profilePictureLink?: string;
+  schoolId: string
+}) {
+  const docRef = doc(db, 'Teacher', teacherId);
+  await setDoc(docRef, teacher, { merge: true });
+}
+// eliminar profesor
+export async function deleteTeacher(teacherId: string) {
+  const docRef = doc(db, 'Teacher', teacherId);
+  await deleteDoc(docRef);
+}
+
+
+// archivar profesor
+export async function archiveTeacher(teacherId: string) {
+  const docRef = doc(db, 'Teacher', teacherId);
+  await setDoc(docRef, { state: false }, { merge: true });
+}
+
+// GESTION DE ESTUDIANTES
+export async function getStudentByCode(codStudent: string) {
+  const studentsRef = collection(db, 'Student');
+  const q = query(studentsRef, where('codStudent', '==', codStudent));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return null;
+  }
+
+  const studentDoc = querySnapshot.docs[0];
+  return { id: studentDoc.id, ...studentDoc.data() } as Student;
+}
+// crear estudiante
+export async function createStudent(student:{
+  codStudent: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dni: string
+  sex: string;
+  state: boolean;
+  profilePictureLink?: string;
+  schoolId: string;
+  currentGrade: number;
+}) {
+
+  try {
+    // Verificar si ya existe un estudiante con el mismo código
+    const studentExist = await getStudentByCode(student.codStudent);
+    if (studentExist) {
+      throw new Error("Student already exists");
+    }
+    // verificar si ya existe un estudiante con el mismo email
+    const studentByEmail = await getStudentByEmail(student.email);
+    if (studentByEmail) {
+      throw new Error("Student already exists");
+    }
+    const studentData = { ...student, password: generateRandomPassword() };
+    const docRef = doc(collection(db, "Student"));
+    await setDoc(docRef, studentData);
+
+    return { id: docRef.id, password: studentData.password };
+  } catch (error) {
+    console.error("Error creating student:", error);
+    throw new Error("Failed to create student");
+  }
+}
+// actualizar estudiante
+export async function updateStudent(studentId: string, student: {
+  codStudent: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dni: string
+  sex: string;
+  state: boolean;
+  profilePictureLink?: string;
+  schoolId: string;
+  currentGrade: number;
+}) {
+  const docRef = doc(db, 'Student', studentId);
+  await setDoc(docRef, student, { merge: true });
+}
+// eliminar estudiante
+export async function deleteStudent(studentId: string) {
+  const docRef = doc(db, 'Student', studentId);
+  await deleteDoc(docRef);
+}
+// archivar estudiante
+export async function archiveStudent(studentId: string) {
+  const docRef = doc(db, 'Student', studentId);
+  await setDoc(docRef, { state: false }, { merge: true });
+}
+
+export async function assignStudentsToClassroom(studentId: string[], classroomId: string) {
+  // actualizar el array de studentIds del classroom
+  const classroomRef = doc(db, 'Classroom', classroomId);
+  const classroomSnap = await getDoc(classroomRef);
+  console.log('assignStudentToClassroom')
+
+  if (!classroomSnap.exists()) {
+    throw new Error("Classroom not found in database");
+  }
+
+  const classroomData = classroomSnap.data() as Classroom;
+  classroomData.studentIds = studentId;
+  await setDoc(classroomRef, classroomData, { merge: true });
 }

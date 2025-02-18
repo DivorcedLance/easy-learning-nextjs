@@ -3,8 +3,18 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Classroom } from '@/types/classroom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
+import Link from 'next/link'
 
-export default function ClassroomItem({ classroom, expandedClassroom, setExpandedClassroom }: { classroom: Classroom, expandedClassroom: string | null, setExpandedClassroom: Function }) {
+export default function ClassroomItem({ classroom, expandedClassroom, setExpandedClassroom, role, setIsOpen, setIdClassroom }: { classroom: Classroom, expandedClassroom: string | null, setExpandedClassroom: Function, role?: string, setIsOpen?: Function, setIdClassroom?: Function }) {
+  
+  const handleOpenWarningDelete = () => {
+    if (setIsOpen) {
+      setIsOpen(true)
+    }
+    if (setIdClassroom) {
+      setIdClassroom(classroom.id)
+    }
+  }
   return (
     <li className="border-b border-gray-200 pb-2">
       <button
@@ -27,9 +37,23 @@ export default function ClassroomItem({ classroom, expandedClassroom, setExpande
               <p><strong>Nombre del Curso:</strong> {classroom.courseName}</p>
               <p><strong>Grado:</strong> {classroom.grade}</p>
               <p><strong>Sección:</strong> {classroom.section}</p>
-              <a href={`/classroom/${classroom.id}`} className="text-blue-600 hover:underline">
-                <Button variant="default" className="mt-2">Ver Curso</Button>
-              </a>
+              <p><strong>Docente:</strong> {classroom.teacherName}</p>
+              <div className='flex flex-row gap-4'>
+                <a href={`/classroom/${classroom.id}`} className="text-blue-600 hover:underline">
+                  <Button variant="default" className="mt-2">Ver Curso</Button>
+                </a>
+                {role === 'principal' && (
+                  <div className="flex flex-row gap-4">
+                    <Link href={`/classroom/${classroom.id}/edit`}>
+                      <Button variant="default" className="mt-2">Editar Curso</Button>
+                    </Link>
+                    <Button onClick={handleOpenWarningDelete}  variant="destructive" className="mt-2">Eliminar Curso</Button>
+                    <Link href={`/classroom/${classroom.id}/students`}>
+                      <Button variant="outline" className="mt-2">Asignar Estudiantes</Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

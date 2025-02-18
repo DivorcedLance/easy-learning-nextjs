@@ -9,4 +9,5 @@ export interface Student {
   dni: string;
   profilePictureLink: string;
   schoolId: string;
+  state: boolean | null;
 }

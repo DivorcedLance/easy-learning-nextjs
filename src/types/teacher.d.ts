@@ -7,4 +7,6 @@ export interface Teacher {
   codTeacher: string;
   sex: string;
   profilePictureLink: string | null;
+  state: boolean | null;
+  dni: string | null;
 }

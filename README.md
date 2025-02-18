@@ -23,4 +23,4 @@ https://divorcedlance.github.io/EasyLearning/
 - Prueba Semanal
 	- 15 min
 	- 5 preguntas
-	- Calificación Automátic
+	- Calificación Automática

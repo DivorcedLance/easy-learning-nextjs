@@ -1,3 +1,3 @@
 git checkout master
-git reset --hard dev
+git reset --hard ft-routes-state
 git push origin master --force

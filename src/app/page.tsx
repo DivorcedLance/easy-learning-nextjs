@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   return (
     session.user.role === "teacher" ?
-    <TeacherDashboard /> :
+    <TeacherDashboard />:
     <PrincipalDashboard />
   )
 }

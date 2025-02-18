@@ -39,13 +39,16 @@ export function QuestionEditor({ courseId, question, onQuestionAdded }: { course
         getLearningStyles(),
         getTemplates()
       ]);
+      
       setLearningStyles(fetchedLearningStyles);
+
       setTemplates(fetchedTemplates);
       if (question && toEdit) {
         setSelectedTemplate(fetchedTemplates.find((template) => template.id === question.templateId) || null);
       } else {
         setSelectedTemplate(fetchedTemplates[0]);
       }
+
       setIsLoading(false);
     };
 

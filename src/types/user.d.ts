@@ -7,7 +7,8 @@ export interface User {
   codStudent?: string;
   sex: string;
   profilePictureLink: string | null;
-  grade?: number;
+  currentGrade?: number;
   role: "teacher" | "student" | "principal";
   schoolId: string;
+  state: boolean | null;
 }

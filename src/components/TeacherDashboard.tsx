@@ -90,7 +90,7 @@ export default function TeacherDashboard() {
                 {selectedOption === 'info' ? (
                   <UserInfo user={user} />
                 ) : (
-                  <ClassroomList classrooms={classrooms} />
+                  <ClassroomList classrooms={classrooms}  />
                 )}
               </motion.div>
             </AnimatePresence>

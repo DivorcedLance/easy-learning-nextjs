@@ -63,6 +63,7 @@ export default NextAuth({
         codStudent: user.role === "student" ? user.codStudent : null,
         sex: user.sex,
         profilePictureLink: user.profilePictureLink,
+        currentGrade: user.role === "student" ? user.currentGrade : null,
       };
 
       // Obtener la información de la escuela asociada

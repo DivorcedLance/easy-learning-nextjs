@@ -1,5 +1,5 @@
 export type Silabo = {
-    id: string;
+    id: string | null;
     courseId: string | null;
     courseName?: string;
     schoolId: string;
@@ -9,8 +9,8 @@ export type Silabo = {
         goals: string;
         method: string;
         bibliography: string;
-        topics: string[];
-    }
+        topics: Record<string, string>
+    } 
   }
   
        

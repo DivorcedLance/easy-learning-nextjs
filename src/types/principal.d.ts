@@ -6,4 +6,5 @@ export interface Principal {
     email: string;
     sex: string;
     profilePictureLink: string | null;
+    state: boolean | null;
   }

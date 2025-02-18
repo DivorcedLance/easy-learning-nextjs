@@ -9,21 +9,21 @@ export default function SideMenu({ user, selectedOption, setSelectedOption, setI
       <div className="flex flex-col items-center mb-6">
         <div className="flex flex-col items-center mb-3">
           {user.profilePictureLink ? (
-              <Image
-                src={user.profilePictureLink}
-                alt={`${user.firstName} ${user.lastName}`}
-                width={80}
-                height={80}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                <UserLR className="h-12 w-12 text-gray-500" />
-              </div>
-            )}
+            <Image
+              src={user.profilePictureLink}
+              alt={`${user.firstName} ${user.lastName}`}
+              width={80}
+              height={80}
+              className="rounded-full"
+            />
+          ) : (
+            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
+              <UserLR className="h-12 w-12 text-gray-500" />
+            </div>
+          )}
         </div>
-      <h2 className="text-lg font-semibold text-center mb-2">{user.firstName} {user.lastName}</h2>
-      <p className="text-sm text-gray-500 text-center">{user.email}</p>
+        <h2 className="text-lg font-semibold text-center mb-2">{user.firstName} {user.lastName}</h2>
+        <p className="text-sm text-gray-500 text-center">{user.email}</p>
       </div>
 
       <nav>
@@ -49,16 +49,50 @@ export default function SideMenu({ user, selectedOption, setSelectedOption, setI
         </Button>
 
         {user.role === 'principal' && (
-          <Button
-          variant={selectedOption === 'silabus' ? 'default' : 'ghost'}
-          className="w-full justify-start"
-          onClick={() => {
-            setSelectedOption('silabus')
-            setIsOpen(false)
-          }}
-        >
-          <BookOpen className="mr-2 h-4 w-4" /> Silabos
-        </Button>
+          <div>
+            <Button
+              variant={selectedOption === 'silabus' ? 'default' : 'ghost'}
+              className="w-full justify-start"
+              onClick={() => {
+                setSelectedOption('silabus')
+                setIsOpen(false)
+              }}
+            >
+              <BookOpen className="mr-2 h-4 w-4" /> Silabos
+            </Button>
+            <Button
+              variant={selectedOption === 'classrooms' ? 'default' : 'ghost'}
+              className="w-full justify-start"
+              onClick={() => {
+                setSelectedOption('classrooms')
+                setIsOpen(false)
+              }}
+            >
+              <BookOpen className="mr-2 h-4 w-4" /> Clases
+            </Button>
+            <Button
+              variant={selectedOption === 'teachers' ? 'default' : 'ghost'}
+              className="w-full justify-start"
+              onClick={() => {
+                setSelectedOption('teachers')
+                setIsOpen(false)
+              }}
+            >
+              <BookOpen className="mr-2 h-4 w-4" /> Profesores
+            </Button>
+            <Button
+              variant={selectedOption === 'students' ? 'default' : 'ghost'}
+              className="w-full justify-start"
+              onClick={() => {
+                setSelectedOption('students')
+                setIsOpen(false)
+              }}
+            >
+              <BookOpen className="mr-2 h-4 w-4" /> Estudiantes
+            </Button>
+
+          </div>
+
         )}
       </nav>
     </div>

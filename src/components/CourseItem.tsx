@@ -5,22 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Course } from '@/types/course'
 import { getClassroomsByCourse } from '@/lib/firebaseUtils'
 import { Classroom } from '@/types/classroom'
+import Link from 'next/link'
 
 export default function CourseItem({ course, expandedCourse, setExpandedCourse }: { course: Course, expandedCourse: string | null, setExpandedCourse: Function }) {
-    const [classrooms, setClassrooms] = useState<Classroom[]>([])
 
-    useEffect(() => {
-        const fetchClassrooms = async () => {
-            try {
-                const classrooms = await getClassroomsByCourse(course.id)
-                setClassrooms(classrooms)
-            } catch (error) {
-                console.error("Error al obtener salones:", error)
-            }
-        }
-
-        fetchClassrooms()
-    }, [])
   return (
     <li className="border-b border-gray-200 pb-2">
       <button
@@ -39,16 +27,12 @@ export default function CourseItem({ course, expandedCourse, setExpandedCourse }
             transition={{ duration: 0.3 }}
             className="overflow-hidden"
           >
-            <div className="py-2 px-4">
-              <p><strong>Salones:</strong></p>
-                <ul className="list-disc list-inside">
-                    {classrooms.map((classroom, index) => (
-                    <li key={index}>Grado: {classroom.grade} - Sección: {classroom.section}</li>
-                    ))}
-                </ul>
-              <a href={`/course/edit/${course.id}`} className="text-blue-600 hover:underline">
+            <div className="py-2 px-4 space-x-2">
+              <Link href={`/course/edit/${course.id}`} className="text-blue-600 hover:underline">
                 <Button variant="default" className="mt-2">Ver Curso</Button>
-              </a>
+              </Link>
+              <Button variant="default" className="mt-2">Eliminar Curso</Button>
+              <Button variant="default" className="mt-2">Archivar Curso</Button>
             </div>
           </motion.div>
         )}

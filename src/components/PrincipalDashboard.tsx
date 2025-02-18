@@ -8,18 +8,36 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import SideMenu from '@/components/SideMenu'
 import { UserInfo } from '@/components/UserInfo'
-import { getClassroomsBySchool, getClassroomsBySchoolAndTeacher, getCoursesBySchool, getSilabusBySchool } from '@/lib/firebaseUtils'
+import { archiveStudent, archiveTeacher, deleteClassroom, deleteSilabus, deleteStudent, deleteTeacher, getClassroomsBySchool, getCoursesBySchool, getSilabusBySchool, getStudentsBySchool, getTeachersBySchool } from '@/lib/firebaseUtils'
 import { CourseList } from './CourseList'
 import { Course } from '@/types/course'
 import { SilabusList } from './SilabusList'
 import { Silabo } from '@/types/silabo'
+import { ClassroomList } from './ClassroomList'
+import { Classroom } from '@/types/classroom'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
+import { Label } from './ui/label'
+import { Input } from './ui/input'
+import { TeacherList } from './TeacherList'
+import { Teacher } from '@/types/teacher'
+import { StudentList } from './StudentList'
+import { Student } from '@/types/student'
 
 export default function PrincipalDashboard() {
     const { data: session, status } = useSession()
     const [isOpen, setIsOpen] = useState(false)
+    const [isOpenModal, setIsOpenModal] = useState(false)
     const [selectedOption, setSelectedOption] = useState('info')
     const [courses, setCourses] = useState<Course[]>([])
     const [silabus, setSilabus] = useState<Silabo[]>([])
+    const [classrooms, setClassrooms] = useState<Classroom[]>([])
+    const [idClassroom, setIdClassroom] = useState('')
+    const [idTeacher, setIdTeacher] = useState('')
+    const [idStudent, setIdStudent] = useState('')
+    const [silabusId, setSilabusId] = useState('')
+    const [teachers, setTeachers] = useState<Teacher[]>([])
+    const [students, setStudents] = useState<Student[]>([])
+    const [action, setAction] = useState('')
 
     useEffect(() => {
         if (status === "loading") return;
@@ -27,11 +45,75 @@ export default function PrincipalDashboard() {
     }, [session, status])
 
     useEffect(() => {
-        if (session) {
+        if (session?.school?.id) {
             getCoursesBySchool(session.school.id).then(setCourses)
             getSilabusBySchool(session.school.id).then(setSilabus)
+            getClassroomsBySchool(session.school.id).then(setClassrooms)
+            getTeachersBySchool(session.school.id).then(setTeachers)
+            getStudentsBySchool(session.school.id).then(setStudents)
+
+            console.log('verifica 1')
         }
-    }, [session])
+    }, [session?.school?.id])
+
+    const handleArchive = async () => {
+        try {
+            if (selectedOption == "teachers") {
+                await archiveTeacher(idTeacher)
+                setIsOpenModal(false)
+                // actualizar el estado de la lista de profesores
+                setTeachers(teachers.map((teacher) => {
+                    if (teacher.id === idTeacher) {
+                        return { ...teacher, state: false }
+                    }
+                    return teacher
+                }))
+                setIdTeacher('')
+            } else {
+                await archiveStudent(idStudent)
+                setIsOpenModal(false)
+                setStudents(students.map((student) => {
+                    if (student.id === idStudent) {
+                        return { ...student, state: false }
+                    }
+                    return student
+                }))
+                setIdStudent('')
+            }
+        } catch (error) {
+            console.error("Error archiving:", error)
+            alert('Ocurrió un error al archivar')
+        }
+    }
+
+    const handleDelete = async () => {
+        try {
+            if (selectedOption == "classrooms") {
+                await deleteClassroom(idClassroom)
+                setIsOpenModal(false)
+                setClassrooms(classrooms.filter((classroom) => classroom.id !== idClassroom))
+                setIdClassroom('')
+            } else if (selectedOption == "teachers") {
+                await deleteTeacher(idTeacher)
+                setIsOpenModal(false)
+                setTeachers(teachers.filter((teacher) => teacher.id !== idTeacher))
+                setIdTeacher('')
+            } else if (selectedOption == "silabus") {
+                await deleteSilabus(silabusId)
+                setIsOpenModal(false)
+                setSilabus(silabus.filter((s) => s.id !== silabusId))
+                setSilabusId('')
+            } else {
+                await deleteStudent(idStudent)
+                setIsOpenModal(false)
+                setStudents(students.filter((student) => student.id !== idStudent))
+                setIdStudent('')
+            }
+        } catch (error) {
+            console.error("Error deleting:", error)
+            alert('Ocurrió un error al eliminar')
+        }
+    }
 
     if (status === "loading") {
         return <div className="flex items-center justify-center h-screen">Cargando...</div>
@@ -97,11 +179,24 @@ export default function PrincipalDashboard() {
                                     <div className='space-y-4'>
                                         <CourseList courses={courses} />
                                     </div>
+                                ) : selectedOption == 'silabus' ? (
+                                    <div className='space-y-4'>
+                                        <SilabusList silabus={silabus} courses={courses} setIsOpenModal={setIsOpenModal} setSilabusId={setSilabusId} setAction={setAction} />
+                                    </div>
+                                ) : selectedOption == 'classrooms' ? (
+                                    <div className='space-y-4'>
+                                        <ClassroomList classrooms={classrooms} user={user} setIsOpenModal={setIsOpenModal} setIdClassroom={setIdClassroom} />
+                                    </div>
+                                ) : selectedOption == 'teachers' ? (
+                                    <div className='space-y-4'>
+                                        <TeacherList teachers={teachers} setIsOpenModal={setIsOpenModal} setIdTeacher={setIdTeacher} setAction={setAction} />
+                                    </div>
                                 ) : (
                                     <div className='space-y-4'>
-                                        <SilabusList silabus={silabus} courses={courses} />
+                                        <StudentList students={students} setIsOpenModal={setIsOpenModal} setIdStudent={setIdStudent} setAction={setAction} />
                                     </div>
-                                )}
+                                )
+                                }
                             </motion.div>
                         </AnimatePresence>
                     </div>
@@ -109,6 +204,30 @@ export default function PrincipalDashboard() {
 
                 </div>
             </div>
+            {isOpenModal && (
+                <Dialog open={isOpenModal} onOpenChange={() => setIsOpenModal(false)}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            {action == "delete" ? (<DialogTitle>¿Está seguro de eliminar este item?</DialogTitle>) : (<DialogTitle>¿Está seguro de archivar este item?</DialogTitle>)}
+
+                        </DialogHeader>
+                        <div className="ap-4 py-4">
+                            <div className="items-center gap-4">
+                                <Label htmlFor="nombre">
+                                    Los cambios no se podrán deshacer
+                                </Label>
+
+                            </div>
+
+
+                        </div>
+                        <DialogFooter>
+                            {action == "delete" ? (<Button variant="destructive" onClick={handleDelete}>Eliminar</Button>) : (<Button variant="destructive" onClick={handleArchive}>Archivar</Button>)}
+                            <Button type="submit" onClick={() => setIsOpenModal(false)}>Cancelar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     )
 }
